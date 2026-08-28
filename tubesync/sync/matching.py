@@ -22,14 +22,15 @@ min_height = getattr(settings, 'VIDEO_HEIGHT_CUTOFF', 360)
 fallback_hd_cutoff = getattr(settings, 'VIDEO_HEIGHT_IS_HD', 500)
 
 
-def get_fallback_id(by_fmt_id, /, by_language = {}, *, exact = False, fallback_id = False):
+def get_fallback_id(by_fmt_id, /, by_language = {}, *, exact = False, fallback_id = False, prefer_default = True):
     assert isinstance(by_fmt_id, dict), type(by_fmt_id)
     assert isinstance(by_language, dict), type(by_language)
     assert exact in (True, False,), 'invalid value for exact'
 
-    # prefer default
-    if 'default' in by_fmt_id and 'id' in by_fmt_id['default']:
-        return exact, by_fmt_id['default']['id']
+    # prefer the requested audio track, falling back to "default"
+    preferred_key = 'default' if prefer_default else 'original'
+    if preferred_key in by_fmt_id and 'id' in by_fmt_id[preferred_key]:
+        return exact, by_fmt_id[preferred_key]['id']
 
     # try for English
     for lc in english_language_codes:
@@ -83,11 +84,13 @@ def get_best_combined_format(media):
     if not matches:
         return False, False
 
-    # prefer original
-    if 'original' in by_fmt_id and 'id' in by_fmt_id['original']:
-        return True, by_fmt_id['original']['id']
+    # Prefer the "original" audio track, unless the source has been configured
+    # to prefer the "default" audio track (e.g. a dubbed or localised track).
+    if not media.source.prefer_default_audio:
+        if 'original' in by_fmt_id and 'id' in by_fmt_id['original']:
+            return True, by_fmt_id['original']['id']
 
-    # use any available matching format
+    # prefer the "default" audio track, or use any available matching format
     return get_fallback_id(by_fmt_id, by_language, exact=True, fallback_id=matches.pop())
 
 
@@ -111,11 +114,19 @@ def get_best_audio_format(media):
         by_fmt_id[fmt['id']] = fmt
         by_fmt_acodec[fmt['acodec']] = fmt['id']
         by_language[fmt['language_code']] = fmt['id']
-        if 'format_note' in fmt and '(default)' in fmt['format_note']:
-            by_fmt_id['default'] = fmt
+        if 'format_note' in fmt:
+            if '(original)' in fmt['format_note']:
+                by_fmt_id['original'] = fmt
+            if '(default)' in fmt['format_note']:
+                by_fmt_id['default'] = fmt
     if not audio_formats:
         # Media has no audio formats at all
         return False, False
+    # Prefer the requested audio track when its codec matches
+    preferred_note = 'default' if media.source.prefer_default_audio else 'original'
+    preferred = by_fmt_id.get(preferred_note)
+    if preferred is not None and preferred['acodec'] == media.source.source_acodec:
+        return True, preferred['id']
     # Find the first audio format with a matching codec
     if (fmt_id := by_fmt_acodec.get(media.source.source_acodec)) is not None:
         # Matched!
@@ -126,7 +137,10 @@ def get_best_audio_format(media):
         return False, False
 
     # Can fallback, find the next non-matching codec
-    return get_fallback_id(by_fmt_id, by_language, exact=False, fallback_id=audio_formats.pop())
+    return get_fallback_id(
+        by_fmt_id, by_language, exact=False, fallback_id=audio_formats.pop(),
+        prefer_default=media.source.prefer_default_audio,
+    )
 
 
 def get_best_video_format(media):

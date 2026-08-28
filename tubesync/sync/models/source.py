@@ -242,6 +242,12 @@ class Source(db.models.Model):
         default=YouTube_AudioCodec.OPUS,
         help_text=_('Source audio codec, desired audio encoding format to download'),
     )
+    prefer_default_audio = db.models.BooleanField(
+        _('prefer default audio'),
+        default=False,
+        help_text=_('Prefer the "default" audio track (for example a dubbed or localised '
+                    'track) over the "original" audio track when both are available'),
+    )
     prefer_60fps = db.models.BooleanField(
         _('prefer 60fps'),
         default=True,

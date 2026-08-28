@@ -1,3 +1,4 @@
+import json
 import logging
 from django.test import TestCase
 from sync.models import Source, Media
@@ -1082,6 +1083,91 @@ class FormatMatchingTestCase(TestCase):
             self.assertEqual(match_type, expected_match_type)
             # The aim here is to execute the matching code to find error paths, specific testing isn't required
             self.media.get_best_audio_format()
+
+    def _multi_audio_track_metadata(self):
+        '''Metadata for a video that offers both "original" and "default" audio tracks.'''
+        formats = [
+            {
+                'format_id': '100',
+                'format_note': '1080p (original)',
+                'vcodec': 'vp9',
+                'acodec': 'opus',
+                'height': 1080,
+                'width': 1920,
+                'fps': 30,
+                'tbr': 1000,
+                'language': 'es',
+            },
+            {
+                'format_id': '101',
+                'format_note': '1080p (default)',
+                'vcodec': 'vp9',
+                'acodec': 'opus',
+                'height': 1080,
+                'width': 1920,
+                'fps': 30,
+                'tbr': 1000,
+                'language': 'en',
+            },
+            {
+                'format_id': '200',
+                'format_note': 'opus (original)',
+                'vcodec': 'none',
+                'acodec': 'opus',
+                'tbr': 128,
+                'language': 'es',
+            },
+            {
+                'format_id': '201',
+                'format_note': 'opus (default)',
+                'vcodec': 'none',
+                'acodec': 'opus',
+                'tbr': 128,
+                'language': 'en',
+            },
+        ]
+        return json.dumps({
+            'id': 'multiaudio',
+            'upload_date': '20200101',
+            'title': 'Multi audio track video',
+            'formats': formats,
+        })
+
+    def test_combined_prefers_original_audio_by_default(self):
+        self.source.fallback = Val(Fallback.FAIL)
+        self.media.metadata = self._multi_audio_track_metadata()
+        self.media.save()
+        match_type, format_code = self.media.get_best_combined_format()
+        self.assertTrue(match_type)
+        self.assertEqual(format_code, '100')
+
+    def test_combined_prefers_default_audio_when_configured(self):
+        self.source.fallback = Val(Fallback.FAIL)
+        self.source.prefer_default_audio = True
+        self.media.metadata = self._multi_audio_track_metadata()
+        self.media.save()
+        match_type, format_code = self.media.get_best_combined_format()
+        self.assertTrue(match_type)
+        self.assertEqual(format_code, '101')
+
+    def test_audio_prefers_original_audio_by_default(self):
+        self.source.fallback = Val(Fallback.FAIL)
+        self.source.source_resolution = Val(SourceResolution.AUDIO)
+        self.media.metadata = self._multi_audio_track_metadata()
+        self.media.save()
+        match_type, format_code = self.media.get_best_audio_format()
+        self.assertTrue(match_type)
+        self.assertEqual(format_code, '200')
+
+    def test_audio_prefers_default_audio_when_configured(self):
+        self.source.fallback = Val(Fallback.FAIL)
+        self.source.source_resolution = Val(SourceResolution.AUDIO)
+        self.source.prefer_default_audio = True
+        self.media.metadata = self._multi_audio_track_metadata()
+        self.media.save()
+        match_type, format_code = self.media.get_best_audio_format()
+        self.assertTrue(match_type)
+        self.assertEqual(format_code, '201')
 
     def test_is_regex_match(self):
 
