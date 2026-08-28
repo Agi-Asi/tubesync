@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 from pathlib import Path
 from django.conf import settings
 from django.test import TestCase
@@ -122,6 +123,28 @@ class FilepathTestCase(TestCase):
         self.source.media_format = 'test-{hdr}'
         self.assertEqual(self.source.get_example_media_format(),
                          'test-hdr')
+        self.source.media_format = 'test-{season}'
+        self.assertEqual(self.source.get_example_media_format(),
+                         'test-' + timezone.now().strftime('%Y'))
+        self.source.media_format = 'test-{episode}'
+        self.assertEqual(self.source.get_example_media_format(),
+                         'test-01')
+        self.source.media_format = 'test-{video_order}'
+        self.assertEqual(self.source.get_example_media_format(),
+                         'test-01')
+
+    def test_season_episode_macros(self):
+        # Media with a known publish date maps to season (year) and
+        # episode (position within that year) macros
+        self.media.published = timezone.make_aware(
+            datetime(year=2017, month=9, day=11)
+        )
+        self.media.save()
+        self.source.media_format = 'S{season}E{episode} - {key}.{ext}'
+        self.assertEqual(self.media.format_dict['season'], '2017')
+        self.assertEqual(self.media.format_dict['episode'], '1')
+        self.assertEqual(self.media.format_dict['video_order'], '01')
+        self.assertEqual(self.media.filename, 'S2017E1 - mediakey.mkv')
 
     def test_media_filename(self):
         # Check child directories work

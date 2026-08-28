@@ -79,8 +79,18 @@
       <td>Some Playlist</td>
     </tr>
     <tr>
+      <td>{season}</td>
+      <td>Season number, the publish year for channels or <code>1</code> for playlists</td>
+      <td>2021</td>
+    </tr>
+    <tr>
+      <td>{episode}</td>
+      <td>Episode number, the order of the media within its season (for playlists, the order within the playlist)</td>
+      <td>12</td>
+    </tr>
+    <tr>
       <td>{video_order}</td>
-      <td>Episode order in playlist, if in playlist <sub><sup>(can cause issues if playlist is changed after adding)</sup></sub></td>
+      <td>Episode number zero-padded to two digits, useful for sorting</td>
       <td>01</td>
     </tr>
     <tr>
@@ -119,7 +129,7 @@
       <td>60fps</td>
     </tr>
     <tr>
-      <td>{flag_hdr}</td>
+      <td>{hdr}</td>
       <td>Media has HDR flag</td>
       <td>hdr</td>
     </tr>

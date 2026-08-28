@@ -561,6 +561,8 @@ class Source(db.models.Model):
             'key': 'SoMeUnIqUiD',
             'format': '-'.join(fmt),
             'playlist_title': 'Some Playlist Title',
+            'season': now.strftime('%Y'),
+            'episode': '01',
             'video_order': '01',
             'ext': self.extension,
             'resolution': self.source_resolution if self.source_resolution else '',

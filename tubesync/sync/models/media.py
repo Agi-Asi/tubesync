@@ -553,6 +553,13 @@ class Media(models.Model):
         format_str = self.get_format_str()
         display_format = self.get_display_format(format_str)
         dateobj = self.upload_date if self.upload_date else self.created
+        episode_number = self.calculate_episode_number()
+        if episode_number:
+            episode = str(episode_number)
+            video_order = f'{episode_number:02}'
+        else:
+            episode = video_order = ''
+        season = self.upload_date.year if self.upload_date else ''
         return {
             'yyyymmdd': dateobj.strftime('%Y%m%d'),
             'yyyy_mm_dd': dateobj.strftime('%Y-%m-%d'),
@@ -567,7 +574,9 @@ class Media(models.Model):
             'key': self.key,
             'format': '-'.join(display_format['format']),
             'playlist_title': self.playlist_title,
-            'video_order': self.get_episode_str(True),
+            'season': '1' if self.source.is_playlist else str(season),
+            'episode': episode,
+            'video_order': video_order,
             'ext': self.source.extension,
             'resolution': display_format['resolution'],
             'height': display_format['height'],
