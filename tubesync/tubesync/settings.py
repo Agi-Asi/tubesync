@@ -40,7 +40,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'common.middleware.XFrameOptionsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'common.middleware.MaterializeDefaultFieldsMiddleware',
     'common.middleware.BasicAuthMiddleware',
@@ -314,7 +314,17 @@ Disallow: /
 
 USE_X_FORWARDED_HOST = True
 USE_X_FORWARDED_PORT = True
-X_FRAME_OPTIONS = 'SAMEORIGIN'
+# Controls the X-Frame-Options response header sent by Django. Supported values
+# are SAMEORIGIN (the default) and DENY. Set to an empty value (or NONE, DISABLE,
+# OFF, FALSE or 0) to omit the header entirely, which allows TubeSync to be
+# embedded in an iframe on another origin.
+_x_frame_options = getenv('TUBESYNC_X_FRAME_OPTIONS', 'SAMEORIGIN').strip().upper()
+if _x_frame_options in ('', 'NONE', 'DISABLE', 'OFF', 'FALSE', '0'):
+    X_FRAME_OPTIONS = None
+elif _x_frame_options in ('SAMEORIGIN', 'DENY'):
+    X_FRAME_OPTIONS = _x_frame_options
+else:
+    X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 
 BASICAUTH_DISABLE = True

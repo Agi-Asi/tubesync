@@ -262,6 +262,7 @@ useful if you are manually installing TubeSync in some other environment. These 
 | TUBESYNC_HOSTS               | Django's ALLOWED_HOSTS, defaults to `*`                       | tubesync.example.com,otherhost.com                 |
 | TUBESYNC_RESET_DOWNLOAD_DIR  | Toggle resetting `/downloads` permissions, defaults to True   | True                                                                          |
 | TUBESYNC_VIDEO_HEIGHT_CUTOFF | Smallest video height in pixels permitted to download         | 240                                                                           |
+| TUBESYNC_X_FRAME_OPTIONS     | X-Frame-Options header, SAMEORIGIN or DENY. Set empty to allow embedding in iframes | SAMEORIGIN                                                    |
 | TUBESYNC_RENAME_SOURCES      | Rename media files from selected sources                      | Source1_directory,Source2_directory                |
 | TUBESYNC_RENAME_ALL_SOURCES  | Rename media files from all sources                           | True                                                                          |
 | TUBESYNC_DIRECTORY_PREFIX    | Enable `video` and `audio` directory prefixes in `/downloads` | True                                                                          |

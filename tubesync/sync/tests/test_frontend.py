@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 from urllib.parse import urlsplit
 from django.conf import settings
-from django.test import TestCase, Client
+from django.test import TestCase, Client, override_settings
 from django.utils import timezone
 from django_huey import DJANGO_HUEY, get_queue
 from common.models import TaskHistory
@@ -39,6 +39,19 @@ class FrontEndTestCase(TestCase):
         c = Client()
         response = c.get('/')
         self.assertEqual(response.status_code, 200)
+
+    def test_x_frame_options(self):
+        # The header defaults to SAMEORIGIN
+        response = Client().get('/')
+        self.assertEqual(response.headers.get('X-Frame-Options'), 'SAMEORIGIN')
+        # It can be tightened to DENY
+        with override_settings(X_FRAME_OPTIONS='DENY'):
+            response = Client().get('/')
+            self.assertEqual(response.headers.get('X-Frame-Options'), 'DENY')
+        # It can be disabled to allow embedding in an iframe
+        with override_settings(X_FRAME_OPTIONS=None):
+            response = Client().get('/')
+            self.assertIsNone(response.headers.get('X-Frame-Options'))
 
     def test_validate_source(self):
         test_sources = {
