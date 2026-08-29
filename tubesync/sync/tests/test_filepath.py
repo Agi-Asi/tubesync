@@ -244,3 +244,18 @@ class FilepathTestCase(TestCase):
         self.assertEqual(downloaded_audio.format_dict['resolution'], 'audio')
         self.assertEqual(downloaded_audio.format_dict['height'], '0')
         self.source.source_resolution = Val(SourceResolution.VIDEO_1080P)
+
+    def test_unicode_source_and_title_filenames(self):
+        # Non-Latin (Cyrillic) source and title must be preserved, see #237
+        self.source.name = 'Тестовый канал'
+        self.media.title = 'Выполняем тестовое задание'
+        self.source.media_format = '{source} - {title_full}.{ext}'
+        self.assertEqual(self.source.slugname, 'тестовый-канал')
+        self.assertEqual(self.media.format_dict['source'], 'тестовый-канал')
+        self.assertEqual(self.media.format_dict['source_full'], 'Тестовый канал')
+        self.assertEqual(self.media.format_dict['title'], 'выполняем-тестовое-задание')
+        self.assertEqual(self.media.format_dict['title_full'], 'Выполняем тестовое задание')
+        self.assertEqual(
+            self.media.filename,
+            'тестовый-канал - Выполняем тестовое задание.mkv',
+        )

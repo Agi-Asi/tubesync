@@ -339,7 +339,7 @@ class Source(db.models.Model):
     @property
     def slugname(self):
         replaced = self.name.replace('_', '-').replace('&', 'and').replace('+', 'and')
-        return slugify(replaced)[:80]
+        return slugify(replaced, allow_unicode=True)[:80]
 
     def deactivate(self):
         self.download_media = False
